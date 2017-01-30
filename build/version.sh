@@ -24,7 +24,8 @@ fi
 last_svn_revision=6962
 last_svn_hash="16cd907fe7482cb54a7374cd28b8501f138116be"
 
-git_revision=$(expr $last_svn_revision + $(git rev-list --count $last_svn_hash..HEAD))
+merge_base=$(git merge-base refs/remotes/origin/master HEAD)
+git_revision=$(expr $last_svn_revision + $(git rev-list --count ${last_svn_hash}..${merge_base}))
 git_version_str=$(git describe --exact-match 2> /dev/null)
 installer_version='0.0.0'
 resource_version='0, 0, 0'
@@ -38,9 +39,10 @@ if test x$git_version_str != x; then
 else
   git_branch="$(git symbolic-ref HEAD 2> /dev/null)" || git_branch="(unnamed branch)"
   git_branch="${git_branch##refs/heads/}"
+  git_branch_revision="$(git rev-list --count $merge_base..HEAD)"
   git_hash=$(git rev-parse --short HEAD)
 
-  git_version_str="${git_revision}-${git_branch}-${git_hash}"
+  git_version_str="${git_revision}+${git_branch_revision}-${git_branch}-${git_hash}"
   tagged_release=0
 fi
 
