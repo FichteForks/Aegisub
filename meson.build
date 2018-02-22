@@ -55,6 +55,14 @@ foreach dep : [
                    required : false, static: b_static)
 
     optname = 'enable_@0@'.format(dep[0].split('-')[0])
+    if d.found() and dep[0] == 'ffms2'
+        dd = dependency('libavutil')
+        if dd.found()
+            deps += dd
+        else
+            d = dd  # makes following d.found() check fail
+        endif
+    endif
     if d.found() and get_option(optname) != 'false'
         deps += d
         conf.set('WITH_@0@'.format(dep[0].split('-')[0].to_upper()), '1')

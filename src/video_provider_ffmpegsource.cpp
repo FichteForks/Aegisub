@@ -43,6 +43,8 @@
 #include <libaegisub/fs.h>
 #include <libaegisub/make_unique.h>
 
+#include <libavutil/pixfmt.h>
+
 namespace {
 /// @class FFmpegSourceVideoProvider
 /// @brief Implements video loading through the FFMS library.
@@ -78,7 +80,7 @@ public:
 		if (matrix == RealColorSpace)
 			FFMS_SetInputFormatV(VideoSource, CS, CR, FFMS_GetPixFmt(""), nullptr);
 		else if (matrix == "TV.601")
-			FFMS_SetInputFormatV(VideoSource, FFMS_CS_BT470BG, CR, FFMS_GetPixFmt(""), nullptr);
+			FFMS_SetInputFormatV(VideoSource, AVCOL_SPC_BT470BG, CR, FFMS_GetPixFmt(""), nullptr);
 		else
 			return;
 		ColorSpace = matrix;
@@ -103,16 +105,16 @@ std::string colormatrix_description(int cs, int cr) {
 	std::string str = cr == FFMS_CR_JPEG ? "PC" : "TV";
 
 	switch (cs) {
-		case FFMS_CS_RGB:
+		case AVCOL_SPC_RGB:
 			return "None";
-		case FFMS_CS_BT709:
+		case AVCOL_SPC_BT709:
 			return str + ".709";
-		case FFMS_CS_FCC:
+		case AVCOL_SPC_FCC:
 			return str + ".FCC";
-		case FFMS_CS_BT470BG:
-		case FFMS_CS_SMPTE170M:
+		case AVCOL_SPC_BT470BG:
+		case AVCOL_SPC_SMPTE170M:
 			return str + ".601";
-		case FFMS_CS_SMPTE240M:
+		case AVCOL_SPC_SMPTE240M:
 			return str + ".240M";
 		default:
 			throw VideoOpenError("Unknown video color space");
@@ -238,14 +240,14 @@ void FFmpegSourceVideoProvider::LoadVideo(agi::fs::path const& filename, std::st
 	int VideoCS = CS = TempFrame->ColorSpace;
 	CR = TempFrame->ColorRange;
 
-	if (CS == FFMS_CS_UNSPECIFIED)
-		CS = Width > 1024 || Height >= 600 ? FFMS_CS_BT709 : FFMS_CS_BT470BG;
+	if (CS == AVCOL_SPC_UNSPECIFIED)
+		CS = Width > 1024 || Height >= 600 ? AVCOL_SPC_BT709 : AVCOL_SPC_BT470BG;
 	RealColorSpace = ColorSpace = colormatrix_description(CS, CR);
 
 #if FFMS_VERSION >= ((2 << 24) | (17 << 16) | (1 << 8) | 0)
-	if (CS != FFMS_CS_RGB && CS != FFMS_CS_BT470BG && ColorSpace != colormatrix && (colormatrix == "TV.601" || OPT_GET("Video/Force BT.601")->GetBool())) {
-		CS = FFMS_CS_BT470BG;
-		ColorSpace = colormatrix_description(FFMS_CS_BT470BG, CR);
+	if (CS != AVCOL_SPC_RGB && CS != AVCOL_SPC_BT470BG && ColorSpace != colormatrix && (colormatrix == "TV.601" || OPT_GET("Video/Force BT.601")->GetBool())) {
+		CS = AVCOL_SPC_BT470BG;
+		ColorSpace = colormatrix_description(AVCOL_SPC_BT470BG, CR);
 	}
 
 	if (CS != VideoCS) {
