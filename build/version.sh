@@ -24,7 +24,14 @@ fi
 last_svn_revision=6962
 last_svn_hash="16cd907fe7482cb54a7374cd28b8501f138116be"
 
-merge_base=$(git merge-base refs/remotes/origin/master HEAD)
+merge_base=$(git merge-base refs/remotes/upstream/master HEAD 2>/dev/null)
+if test -z "$merge_base"; then
+  merge_base=$(git merge-base refs/remotes/origin/master HEAD 2>/dev/null)
+fi
+if test -z "$merge_base"; then
+  merge_base=HEAD
+fi
+
 git_revision=$(expr $last_svn_revision + $(git rev-list --count ${last_svn_hash}..${merge_base}))
 git_version_str=$(git describe --exact-match 2> /dev/null)
 installer_version='0.0.0'
